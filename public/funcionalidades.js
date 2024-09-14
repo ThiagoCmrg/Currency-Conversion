@@ -5,7 +5,7 @@ const { ptBR } = require('date-fns/locale'); // Importando o locale pt-BR para f
 
 
 
-// Funcionalidades do JavaScript(botões)
+// Funcionalidades do JavaScript(botões))
 
 
 
