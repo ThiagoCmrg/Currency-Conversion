@@ -1,9 +1,4 @@
-// const request = require('request');
-// const readline = require('readline');
-// const { format } = require('date-fns');
-
-
-//API DAS BANDEIRAS
+///API DAS BANDEIRAS
 document.getElementById('from-currency-select').addEventListener('change', function() {
   const paisSelecionado = this.value;
   const imgElement = document.getElementById('from-flag');
@@ -74,102 +69,68 @@ document.getElementById('to-currency-select').addEventListener('change', functio
     }
 });
 
-
-
-
 //API DAS COTAÇÕES
-  // Função para fazer a requisição e processar as cotações
-  const obterCotacoes = function(callback) {
-    const moedas = 'USD-BRL,EUR-BRL,JPY-BRL,ZAR-BRL,AUD-BRL,ARS-BRL,CAD-BRL,BRL-USD,BRL-EUR,BRL-JPY,BRL-ZAR,BRL-AUD,BRL-ARS,BRL-CAD';
-  
-    const options = {
-      url: `https://economia.awesomeapi.com.br/last/${moedas}`,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    };
-  
-    const callback_todas_cotacoes = function(erro, res, body) {
-      if (erro) {
-        console.error('Erro na requisição:', erro);
-        return;
-      }
-  
-      try {
-        let json = JSON.parse(body);
-        callback(json);
-      } catch (e) {
-        console.error('Erro ao processar o JSON:', e);
-      }
-    };
-    request(options, callback_todas_cotacoes);
+
+// Função para fazer a requisição e processar as cotações
+const obterCotacoes = function(callback) {
+  const moedas = 'USD-BRL,EUR-BRL,JPY-BRL,ZAR-BRL,AUD-BRL,ARS-BRL,CAD-BRL,BRL-USD,BRL-EUR,BRL-JPY,BRL-ZAR,BRL-AUD,BRL-ARS,BRL-CAD';
+
+  fetch(`https://economia.awesomeapi.com.br/last/${moedas}`)
+    .then(response => response.json())
+    .then(json => callback(json))
+    .catch(error => console.error('Erro na requisição:', error));
+};
+
+// Função para obter a cotação de uma moeda específica
+const obterCotacao = function(json, moeda) {
+  const chaves = {
+    'USD': 'USDBRL',
+    'EUR': 'EURBRL',
+    'JPY': 'JPYBRL',
+    'ZAR': 'ZARBRL',
+    'AUD': 'AUDBRL',
+    'ARS': 'ARSBRL',
+    'CAD': 'CADBRL',
+    'BRL': 'BRLUSD'
   };
-
-
-  // Função para obter a cotação de uma moeda específica
-  const obterCotacao = function(json, moeda) {
-    const chaves = {
-      'USD': 'USDBRL',
-      'EUR': 'EURBRL',
-      'JPY': 'JPYBRL',
-      'ZAR': 'ZARBRL',
-      'AUD': 'AUDBRL',
-      'ARS': 'ARSBRL',
-      'CAD': 'CADBRL',
-      'BRL': 'BRLUSD'
-    };
   
-    return json[chaves[moeda]] || null;
-  };
+  return json[chaves[moeda]] || null;
+};
+
+// Função para converter valor entre duas moedas e mostrar a data de atualização(Chamar a função apertando enter)
+document.getElementById('valor').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    const valor = parseFloat(this.value);
+    const deMoeda = document.getElementById('from-currency-select').value;
+    const paraMoeda = document.getElementById('to-currency-select').value;
+
+    obterCotacoes(function(json) {
+      converterMoedas(json, deMoeda, paraMoeda, valor);
+    });
+  }
+});
 
 
-    // Função para converter valor entre duas moedas e mostrar a data de atualização
-    const converterMoedas = function(json, deMoeda, paraMoeda) {
-        const valor = 1; // Valor fixo para conversão
-        const cotacaoDe = obterCotacao(json, deMoeda);
-        const cotacaoPara = obterCotacao(json, paraMoeda);
-        
-        if (cotacaoDe && cotacaoPara) {
-          const valorEmReal = deMoeda === 'BRL' ? valor : valor * cotacaoDe.bid;
-          const valorConvertido = paraMoeda === 'BRL' ? valorEmReal : valorEmReal / cotacaoPara.bid;
-          console.log(`${valor} ${deMoeda} = ${valorConvertido.toFixed(2)} ${paraMoeda}`);
-      
-          // Exibir a data de atualização das cotações no formato brasileiro
-          console.log(`Cotação atualizada em: ${formatarDataBrasileira(cotacaoDe.create_date)}`);
-        } else {
-          console.log('Erro ao obter cotações para conversão');
-        }
-      };
+// Modificando a função converterMoedas pra receber o valor fornecido pelo usuário
+const converterMoedas = function(json, deMoeda, paraMoeda, valor) {
+  const cotacaoDe = obterCotacao(json, deMoeda);
+  const cotacaoPara = obterCotacao(json, paraMoeda);
+
+  if (cotacaoDe && cotacaoPara) {
+    const valorEmReal = deMoeda === 'BRL' ? valor : valor * cotacaoDe.bid;
+    const valorConvertido = paraMoeda === 'BRL' ? valorEmReal : valorEmReal / cotacaoPara.bid;
+
+    console.log(`${valor} ${deMoeda} = ${valorConvertido.toFixed(2)} ${paraMoeda}`);
 
 
+    // Atualizar a interface com o valor convertido
+    document.getElementById('converted-value').innerText = ` ${valorConvertido.toFixed(2)}`;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-//   // Pergunta ao usuário quais moedas ele deseja converter
-//   const perguntarConversao = function() {
-//     rl.question('Qual moeda você quer converter? (USD, EUR, JPY, ZAR, AUD, ARS, CAD, BRL): ', function(deMoeda) {
-//       rl.question('Qual moeda você quer converter (para)? (USD, EUR, JPY, ZAR, AUD, ARS, CAD, BRL): ', function(paraMoeda) {
-//         obterCotacoes(function(json) {
-//           converterMoedas(json, deMoeda.toUpperCase(), paraMoeda.toUpperCase());
-//           rl.close();
-//         });
-//       });
-//     });
-//   };
-  
-//   // Iniciando o processo
-//   perguntarConversao();
+    // Exibir a data de atualização das cotações (em teste)
+    const formattedDate = cotacaoDe.create_date;
+    document.querySelector('.Atualizacao center').innerText = `Cotação atualizada em: ${formattedDate}`;
+  } else {
+    console.log('Erro ao obter cotações para conversão');
+  }
+};
